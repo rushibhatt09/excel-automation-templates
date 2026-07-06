@@ -4,6 +4,8 @@ Free, no-code Excel/Google Sheets templates for the spreadsheet work that admin,
 end up doing by hand every month - checking bills, catching overcharges, and making sure the numbers add up.
 
 No coding, no plugins, no sign-ups. Download a template, drop in your own data, and the formulas do the rest.
+Each template is also available as a ready-to-import [n8n](https://n8n.io) workflow, if you'd rather
+automate the audit than run it in a spreadsheet.
 
 Every template follows the same pattern: a Rate Card/Library tab you customize, a Data tab you paste your
 own records into, and an Audit/Fit Checker tab that recalculates automatically and flags what needs
@@ -32,7 +34,7 @@ brands just pay the bill without checking.
 shipment *should* have cost, compares it to what the courier actually billed, and flags every mismatch - so
 you end up with a ready-made list of overcharges to dispute.
 
-📄 File: [`Courier_Billing_Audit_Template.xlsx`](./courier-billing-audit/Courier_Billing_Audit_Template.xlsx) · Full doc: [courier-billing-audit/README.md](./courier-billing-audit/README.md)
+📄 File: [`Courier_Billing_Audit_Template.xlsx`](./courier-billing-audit/Courier_Billing_Audit_Template.xlsx) · Full doc: [courier-billing-audit/README.md](./courier-billing-audit/README.md) · Also available as an [n8n workflow](./courier-billing-audit/n8n-workflow)
 
 ### What it looks like
 
@@ -138,7 +140,7 @@ transactions, which adds up and is easy to miss.
 what should have been deducted for every transaction, compares it to what was actually deducted, and flags
 every overcharge.
 
-📄 File: [`Payment_Gateway_TDR_Audit_Template.xlsx`](./payment-gateway-tdr-audit/Payment_Gateway_TDR_Audit_Template.xlsx) · Full doc: [payment-gateway-tdr-audit/README.md](./payment-gateway-tdr-audit/README.md)
+📄 File: [`Payment_Gateway_TDR_Audit_Template.xlsx`](./payment-gateway-tdr-audit/Payment_Gateway_TDR_Audit_Template.xlsx) · Full doc: [payment-gateway-tdr-audit/README.md](./payment-gateway-tdr-audit/README.md) · Also available as an [n8n workflow](./payment-gateway-tdr-audit/n8n-workflow)
 
 ### What it looks like
 
@@ -237,7 +239,7 @@ figure out a product doesn't fit its usual box only after it's already been pick
 the cheapest box each product actually fits in, and flags any product that doesn't fit any box you stock -
 before it becomes a packing-table problem or an oversized shipping bill.
 
-📄 File: [`Volumetric_Weight_Box_Fit_Checker.xlsx`](./volumetric-weight-box-fit-checker/Volumetric_Weight_Box_Fit_Checker.xlsx) · Full doc: [volumetric-weight-box-fit-checker/README.md](./volumetric-weight-box-fit-checker/README.md)
+📄 File: [`Volumetric_Weight_Box_Fit_Checker.xlsx`](./volumetric-weight-box-fit-checker/Volumetric_Weight_Box_Fit_Checker.xlsx) · Full doc: [volumetric-weight-box-fit-checker/README.md](./volumetric-weight-box-fit-checker/README.md) · Also available as an [n8n workflow](./volumetric-weight-box-fit-checker/n8n-workflow)
 
 ### What it looks like
 

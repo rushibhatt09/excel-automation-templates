@@ -12,6 +12,9 @@ before it becomes a packing-table problem or an oversized shipping bill.
 
 [`Volumetric_Weight_Box_Fit_Checker.xlsx`](./Volumetric_Weight_Box_Fit_Checker.xlsx)
 
+Prefer automation over spreadsheets? The same fit-check logic is also available as a ready-to-import
+[n8n workflow](./n8n-workflow) - same box library, same math, same sample results.
+
 ## What it looks like
 
 **Box Library** - your carton sizes, costs, and weight limits:

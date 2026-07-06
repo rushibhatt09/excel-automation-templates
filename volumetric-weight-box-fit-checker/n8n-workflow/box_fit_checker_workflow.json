@@ -1,0 +1,151 @@
+{
+  "name": "Volumetric Weight & Box-Fit Checker",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "2671ced8-248c-44df-8229-8b6e95555dd4",
+      "name": "When clicking \"Execute workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// EDIT THIS: your own carton sizes, ordered smallest/cheapest to largest/costliest (mirrors the Excel \"Box Library\" tab)\nconst BOX_LIBRARY = [\n  { code: \"BX1\", name: \"XS\", length: 15, width: 10, height: 8, maxWeight: 2, cost: 6 },\n  { code: \"BX2\", name: \"S\", length: 20, width: 15, height: 10, maxWeight: 5, cost: 8 },\n  { code: \"BX3\", name: \"M\", length: 25, width: 20, height: 15, maxWeight: 8, cost: 11 },\n  { code: \"BX4\", name: \"L\", length: 35, width: 28, height: 18, maxWeight: 12, cost: 15 },\n  { code: \"BX5\", name: \"XL\", length: 45, width: 35, height: 25, maxWeight: 20, cost: 22 },\n];\nreturn [{ json: { boxLibrary: BOX_LIBRARY } }];"
+      },
+      "id": "8b7fedbc-4d10-4758-9042-880f98ecadca",
+      "name": "Box Library",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        40,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Replace this node with your own data source (Google Sheets, HTTP Request, Read Binary File, etc.)\n// Each item below matches one row of the \"Product Data\" tab in the Excel template.\n// Enter Length = longest side, Width = middle side, Height = shortest side.\nconst products = [\n  [\"SKU-1001\",\"Face Serum 30ml\",12,8,6,0.15],\n  [\"SKU-1002\",\"Sunscreen Combo Pack\",18,13,9,0.35],\n  [\"SKU-1003\",\"Face Wash 100ml x2\",16,11,7,0.40],\n  [\"SKU-1004\",\"Moisturizer Jar Large\",22,18,12,0.60],\n  [\"SKU-1005\",\"Gift Hamper Small\",24,19,14,1.20],\n  [\"SKU-1006\",\"Gift Hamper Large\",33,26,16,3.50],\n  [\"SKU-1007\",\"Hair Dryer\",30,14,10,0.90],\n  [\"SKU-1008\",\"Combo Kit 6-pc\",34,27,17,4.80],\n  [\"SKU-1009\",\"Bulk Wholesale Carton\",44,34,24,9.00],\n  [\"SKU-1010\",\"Oversized Appliance\",60,40,30,15.00],\n];\nconst cols = [\"sku\",\"name\",\"length\",\"width\",\"height\",\"weight\"];\nreturn products.map(row => ({ json: Object.fromEntries(cols.map((c,i) => [c, row[i]])) }));"
+      },
+      "id": "be127adc-4bf5-41ab-8f56-32682bd3c869",
+      "name": "Sample Product Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const boxLibrary = $(\"Box Library\").first().json.boxLibrary;\n\nreturn $input.all().map(item => {\n  const p = item.json;\n  const productVolume = p.length * p.width * p.height;\n  const fits = boxLibrary.filter(b =>\n    p.length <= b.length && p.width <= b.width && p.height <= b.height && p.weight <= b.maxWeight\n  );\n  const recommended = fits[0]; // boxLibrary is ordered cheapest-first, so the first fit is the cheapest fit\n  if (!recommended) {\n    return { json: { ...p, productVolume, recommendedBox: \"NO BOX FITS\", recommendedBoxCost: 0, spaceUtilization: 0, status: \"REVIEW - NO STANDARD BOX FITS\" } };\n  }\n  const boxVolume = recommended.length * recommended.width * recommended.height;\n  return { json: { ...p, productVolume, recommendedBox: recommended.code, recommendedBoxCost: recommended.cost, spaceUtilization: Math.round((productVolume / boxVolume) * 1000) / 1000, status: \"OK\" } };\n});"
+      },
+      "id": "4491524d-a416-4775-8f1e-2accec91f907",
+      "name": "Fit Checker",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().filter(item => item.json.status !== \"OK\");"
+      },
+      "id": "cc7c9892-9873-44cd-9a11-31b0d14dd29c",
+      "name": "Filter: Needs Review",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map(i => i.json);\nconst totalProducts = items.length;\nconst needsReview = items.filter(i => i.status !== \"OK\");\nconst fitted = items.filter(i => i.status === \"OK\");\nconst totalCost = fitted.reduce((s,i)=>s+i.recommendedBoxCost,0);\nconst avgUtilization = fitted.length ? Math.round((fitted.reduce((s,i)=>s+i.spaceUtilization,0) / fitted.length) * 1000) / 1000 : 0;\nconst boxCodes = [\"BX1\",\"BX2\",\"BX3\",\"BX4\",\"BX5\",\"NO BOX FITS\"];\nconst boxUsageBreakdown = boxCodes.map(code => ({\n  boxCode: code,\n  productsAssigned: items.filter(i => i.recommendedBox === code).length,\n}));\nreturn [{ json: {\n  totalProductsChecked: totalProducts,\n  productsWithNoFittingBox: needsReview.length,\n  totalRecommendedPackagingCost: totalCost,\n  averageSpaceUtilization: avgUtilization,\n  boxUsageBreakdown,\n}}];"
+      },
+      "id": "53400c18-811c-42a6-bdd1-84babb26cb93",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Volumetric Weight & Box-Fit Checker\n\nMirrors the Volumetric_Weight_Box_Fit_Checker.xlsx in this repo.\n\n1. Click **Execute workflow** to run it on the built-in sample data.\n2. Open **Box Library** and edit `BOX_LIBRARY` with your own carton sizes - keep them ordered smallest/cheapest to largest/costliest.\n3. Replace **Sample Product Data** with a real source (Google Sheets, HTTP Request, or Read Binary File + Extract from File for an uploaded .xlsx/.csv). Enter Length = longest side, Width = middle side, Height = shortest side.\n4. **Filter: Needs Review** outputs products with no fitting box. **Summary** outputs the same totals as the Excel Summary tab.",
+        "height": 240,
+        "width": 780
+      },
+      "id": "1699cf48-9c03-4fb0-91fe-8251109db7f9",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        -60
+      ]
+    }
+  ],
+  "connections": {
+    "When clicking \"Execute workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Box Library",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Box Library": {
+      "main": [
+        [
+          {
+            "node": "Sample Product Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample Product Data": {
+      "main": [
+        [
+          {
+            "node": "Fit Checker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fit Checker": {
+      "main": [
+        [
+          {
+            "node": "Filter: Needs Review",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

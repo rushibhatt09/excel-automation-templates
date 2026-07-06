@@ -1,0 +1,127 @@
+{
+  "name": "Payment Gateway TDR Audit",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "41790066-1a36-4dd8-85f2-d2ab81c6bd2d",
+      "name": "When clicking \"Execute workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Replace this node with your own data source (Google Sheets, HTTP Request, Read Binary File, etc.)\n// Each item below matches one row of the \"Settlement Data\" tab in the Excel template.\nconst sampleSettlements = [\n  [\"TXN90001\",\"ORD6001\",\"UPI\",1299,10.68,1.92,1286.40],\n  [\"TXN90002\",\"ORD6002\",\"Credit Card\",2499,83.12,14.96,2400.92],\n  [\"TXN90003\",\"ORD6003\",\"Debit Card\",899,3.60,0.64,894.76],\n  [\"TXN90004\",\"ORD6004\",\"Netbanking\",1799,34.94,6.29,1757.77],\n  [\"TXN90005\",\"ORD6005\",\"Wallet\",599,19.15,3.45,576.40],\n  [\"TXN90006\",\"ORD6006\",\"UPI\",3499,10.50,1.89,3486.61],\n  [\"TXN90007\",\"ORD6007\",\"Credit Card\",4299,128.23,23.08,4147.69],\n  [\"TXN90008\",\"ORD6008\",\"Debit Card\",1099,17.11,3.08,1078.81],\n  [\"TXN90009\",\"ORD6009\",\"Netbanking\",2199,43.18,7.77,2148.05],\n  [\"TXN90010\",\"ORD6010\",\"Wallet\",1499,37.74,6.79,1454.47],\n  [\"TXN90011\",\"ORD6011\",\"UPI\",999,2.15,0.39,996.46],\n  [\"TXN90012\",\"ORD6012\",\"Credit Card\",5499,175.25,31.55,5292.20],\n];\nconst cols = [\"transactionId\",\"orderId\",\"paymentMethod\",\"transactionAmount\",\"actualTdrDeducted\",\"actualGstDeducted\",\"netSettledAmount\"];\nreturn sampleSettlements.map(row => ({ json: Object.fromEntries(cols.map((c,i) => [c, row[i]])) }));"
+      },
+      "id": "b00329b1-c875-4ad8-b19f-e1df3878b537",
+      "name": "Sample Settlement Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        40,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// EDIT THIS: your payment gateway's contracted TDR rate card (mirrors the Excel \"TDR Rate Card\" tab)\nconst RATE_CARD = {\n  \"UPI\": { tdrRate: 0.003, gstRate: 0.18 },\n  \"Debit Card\": { tdrRate: 0.004, gstRate: 0.18 },\n  \"Credit Card\": { tdrRate: 0.018, gstRate: 0.18 },\n  \"Netbanking\": { tdrRate: 0.010, gstRate: 0.18 },\n  \"Wallet\": { tdrRate: 0.015, gstRate: 0.18 },\n};\n\nreturn $input.all().map(item => {\n  const s = item.json;\n  const rate = RATE_CARD[s.paymentMethod];\n  const expectedTdrAmount = s.transactionAmount * rate.tdrRate;\n  const expectedGstOnTdr = expectedTdrAmount * rate.gstRate;\n  const expectedTotalDeduction = expectedTdrAmount + expectedGstOnTdr;\n  const actualTotalDeduction = s.actualTdrDeducted + s.actualGstDeducted;\n  const variance = Math.round((actualTotalDeduction - expectedTotalDeduction) * 100) / 100;\n  const verdict = variance > 0.5 ? \"OVERCHARGED\" : variance < -0.5 ? \"UNDERBILLED\" : \"MATCH\";\n  return { json: { ...s, expectedTdrRate: rate.tdrRate, expectedTdrAmount, expectedGstOnTdr, expectedTotalDeduction, actualTotalDeduction, variance, verdict } };\n});"
+      },
+      "id": "66847bf7-10a0-4084-a640-684862078d5b",
+      "name": "Audit Transactions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().filter(item => item.json.verdict === \"OVERCHARGED\");"
+      },
+      "id": "b4cf471b-0d07-48fc-9e75-e4f2b68da58e",
+      "name": "Filter: Overcharged Only",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map(i => i.json);\nconst totalTransactions = items.length;\nconst totalTransactionValue = items.reduce((s,i)=>s+i.transactionAmount,0);\nconst totalActualDeduction = items.reduce((s,i)=>s+i.actualTotalDeduction,0);\nconst totalExpectedDeduction = items.reduce((s,i)=>s+i.expectedTotalDeduction,0);\nconst netVariance = Math.round((totalActualDeduction - totalExpectedDeduction) * 100) / 100;\nconst overcharged = items.filter(i=>i.verdict===\"OVERCHARGED\");\nconst underbilled = items.filter(i=>i.verdict===\"UNDERBILLED\");\nconst totalOvercharge = Math.round(overcharged.reduce((s,i)=>s+i.variance,0) * 100) / 100;\nconst methods = [\"UPI\",\"Debit Card\",\"Credit Card\",\"Netbanking\",\"Wallet\"];\nconst paymentMethodBreakdown = methods.map(m => {\n  const mi = items.filter(i=>i.paymentMethod===m);\n  return {\n    paymentMethod: m,\n    transactions: mi.length,\n    totalDeducted: mi.reduce((s,i)=>s+i.actualTotalDeduction,0),\n    totalExpected: mi.reduce((s,i)=>s+i.expectedTotalDeduction,0),\n    overchargeAmount: Math.round(mi.filter(i=>i.verdict===\"OVERCHARGED\").reduce((s,i)=>s+i.variance,0) * 100) / 100,\n  };\n});\nreturn [{ json: {\n  totalTransactionsAudited: totalTransactions,\n  totalTransactionValue,\n  totalActualDeduction: Math.round(totalActualDeduction * 100) / 100,\n  totalExpectedDeduction: Math.round(totalExpectedDeduction * 100) / 100,\n  netVariance,\n  transactionsOvercharged: overcharged.length,\n  totalOverchargeRefundClaimable: totalOvercharge,\n  transactionsUnderbilled: underbilled.length,\n  paymentMethodBreakdown,\n}}];"
+      },
+      "id": "daa2039d-d4be-4a98-aff0-24a46b88c15f",
+      "name": "Summary Dashboard",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Payment Gateway TDR Audit\n\nMirrors the Payment_Gateway_TDR_Audit_Template.xlsx in this repo.\n\n1. Click **Execute workflow** to run it on the built-in sample data.\n2. Open **Audit Transactions** and edit the `RATE_CARD` object with your own gateway's contracted TDR rates.\n3. Replace **Sample Settlement Data** with a real source (Google Sheets, HTTP Request, or Read Binary File + Extract from File for an uploaded .xlsx/.csv) - just keep the same field names.\n4. **Filter: Overcharged Only** outputs your dispute list. **Summary Dashboard** outputs the same totals as the Excel Summary Dashboard tab.",
+        "height": 220,
+        "width": 760
+      },
+      "id": "f4116b92-76b5-497a-985a-a4e77d6cdfa3",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        -40
+      ]
+    }
+  ],
+  "connections": {
+    "When clicking \"Execute workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Sample Settlement Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample Settlement Data": {
+      "main": [
+        [
+          {
+            "node": "Audit Transactions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit Transactions": {
+      "main": [
+        [
+          {
+            "node": "Filter: Overcharged Only",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Summary Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

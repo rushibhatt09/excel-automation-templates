@@ -13,6 +13,9 @@ so you end up with a ready-made list of overcharges to dispute.
 
 [`Courier_Billing_Audit_Template.xlsx`](./Courier_Billing_Audit_Template.xlsx)
 
+Prefer automation over spreadsheets? The same audit logic is also available as a ready-to-import
+[n8n workflow](./n8n-workflow) - same rate card, same math, same sample results.
+
 ## What it looks like
 
 **Rate Card** - your zone rates, ready to overwrite:

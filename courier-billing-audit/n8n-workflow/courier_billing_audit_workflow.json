@@ -1,0 +1,127 @@
+{
+  "name": "Courier Billing Audit",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "7d18ed8f-fdc5-4bea-940b-ed975b3976cb",
+      "name": "When clicking \"Execute workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Replace this node with your own data source (Google Sheets, HTTP Request, Read Binary File, etc.)\n// Each item below matches one row of the \"Shipment Data\" tab in the Excel template.\nconst sampleShipments = [\n  [\"AWB1001\",\"ORD5001\",\"A\",\"Prepaid\",899,0.4,20,15,10,\"Delivered\",1.0,75],\n  [\"AWB1002\",\"ORD5002\",\"B\",\"COD\",1499,0.8,25,20,12,\"Delivered\",1.5,115],\n  [\"AWB1003\",\"ORD5003\",\"C\",\"Prepaid\",2199,1.2,30,25,15,\"Delivered\",2.5,173],\n  [\"AWB1004\",\"ORD5004\",\"D\",\"COD\",999,0.3,15,15,10,\"RTO\",0.5,200],\n  [\"AWB1005\",\"ORD5005\",\"E\",\"Prepaid\",3499,2.1,40,30,20,\"Delivered\",5.0,560],\n  [\"AWB1006\",\"ORD5006\",\"A\",\"COD\",599,0.2,12,10,8,\"Delivered\",0.5,65],\n  [\"AWB1007\",\"ORD5007\",\"B\",\"Prepaid\",1299,0.6,22,18,10,\"Delivered\",1.0,80],\n  [\"AWB1008\",\"ORD5008\",\"C\",\"COD\",1799,1.0,28,22,14,\"RTO\",2.0,341],\n  [\"AWB1009\",\"ORD5009\",\"D\",\"Prepaid\",2599,1.8,35,28,18,\"Delivered\",4.0,305],\n  [\"AWB1010\",\"ORD5010\",\"E\",\"COD\",4299,3.0,45,35,25,\"Delivered\",8.0,926],\n  [\"AWB1011\",\"ORD5011\",\"A\",\"Prepaid\",749,0.35,18,14,9,\"Delivered\",0.5,55],\n  [\"AWB1012\",\"ORD5012\",\"B\",\"Prepaid\",1099,0.5,20,16,11,\"Delivered\",1.0,45],\n];\nconst cols = [\"awb\",\"orderId\",\"zone\",\"paymentMode\",\"orderValue\",\"actualWeight\",\"length\",\"width\",\"height\",\"status\",\"billedWeight\",\"billedAmount\"];\nreturn sampleShipments.map(row => ({ json: Object.fromEntries(cols.map((c,i) => [c, row[i]])) }));"
+      },
+      "id": "e1fc1864-a538-4820-921f-c20f475dbaa4",
+      "name": "Sample Shipment Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        40,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// EDIT THIS: your courier's contracted zone rate card (mirrors the Excel \"Rate Card\" tab)\nconst RATE_CARD = {\n  A: { baseWeight: 0.5, baseRate: 35, addRate: 15, codPct: 0.02, codMin: 30, rtoPct: 1.0 },\n  B: { baseWeight: 0.5, baseRate: 45, addRate: 20, codPct: 0.02, codMin: 30, rtoPct: 1.0 },\n  C: { baseWeight: 0.5, baseRate: 55, addRate: 25, codPct: 0.02, codMin: 30, rtoPct: 1.0 },\n  D: { baseWeight: 0.5, baseRate: 65, addRate: 30, codPct: 0.02, codMin: 30, rtoPct: 1.0 },\n  E: { baseWeight: 0.5, baseRate: 95, addRate: 45, codPct: 0.02, codMin: 30, rtoPct: 1.0 },\n};\n\nfunction ceilToHalf(x) { return Math.ceil(x / 0.5) * 0.5; }\n\nreturn $input.all().map(item => {\n  const s = item.json;\n  const rate = RATE_CARD[s.zone];\n  const volumetricWeight = (s.length * s.width * s.height) / 5000;\n  const chargeableWeight = ceilToHalf(Math.max(s.actualWeight, volumetricWeight));\n  const extraUnits = Math.round((chargeableWeight - rate.baseWeight) / 0.5);\n  const baseFreight = rate.baseRate;\n  const additionalCharge = extraUnits * rate.addRate;\n  const codCharge = s.paymentMode === \"COD\" ? Math.max(s.orderValue * rate.codPct, rate.codMin) : 0;\n  const rtoCharge = s.status === \"RTO\" ? (baseFreight + additionalCharge) * rate.rtoPct : 0;\n  const totalExpectedCharge = baseFreight + additionalCharge + codCharge + rtoCharge;\n  const variance = Math.round((s.billedAmount - totalExpectedCharge) * 100) / 100;\n  const verdict = variance > 1 ? \"OVERCHARGED\" : variance < -1 ? \"UNDERBILLED\" : \"MATCH\";\n  return { json: { ...s, volumetricWeight, chargeableWeight, baseFreight, additionalCharge, codCharge, rtoCharge, totalExpectedCharge, variance, verdict } };\n});"
+      },
+      "id": "4fe33162-ebb8-4623-8faa-5d16092e9d81",
+      "name": "Audit Shipments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().filter(item => item.json.verdict === \"OVERCHARGED\");"
+      },
+      "id": "0cd5b0ef-454a-4aa5-a5e1-c2c95033797e",
+      "name": "Filter: Overcharged Only",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map(i => i.json);\nconst totalShipments = items.length;\nconst totalBilled = items.reduce((s,i)=>s+i.billedAmount,0);\nconst totalExpected = items.reduce((s,i)=>s+i.totalExpectedCharge,0);\nconst netVariance = Math.round((totalBilled - totalExpected) * 100) / 100;\nconst overcharged = items.filter(i=>i.verdict===\"OVERCHARGED\");\nconst underbilled = items.filter(i=>i.verdict===\"UNDERBILLED\");\nconst totalOvercharge = Math.round(overcharged.reduce((s,i)=>s+i.variance,0) * 100) / 100;\nconst zones = [\"A\",\"B\",\"C\",\"D\",\"E\"];\nconst zoneBreakdown = zones.map(z => {\n  const zi = items.filter(i=>i.zone===z);\n  return {\n    zone: z,\n    shipments: zi.length,\n    totalBilled: zi.reduce((s,i)=>s+i.billedAmount,0),\n    totalExpected: zi.reduce((s,i)=>s+i.totalExpectedCharge,0),\n    overchargeAmount: Math.round(zi.filter(i=>i.verdict===\"OVERCHARGED\").reduce((s,i)=>s+i.variance,0) * 100) / 100,\n  };\n});\nreturn [{ json: {\n  totalShipmentsAudited: totalShipments,\n  totalBilledByCourier: totalBilled,\n  totalExpectedCharge: totalExpected,\n  netVariance,\n  shipmentsOvercharged: overcharged.length,\n  totalOverchargeRefundClaimable: totalOvercharge,\n  shipmentsUnderbilled: underbilled.length,\n  zoneBreakdown,\n}}];"
+      },
+      "id": "d7c77210-d0f3-4b33-8c94-06336fd1881e",
+      "name": "Summary Dashboard",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Courier Billing Audit\n\nMirrors the Courier_Billing_Audit_Template.xlsx in this repo.\n\n1. Click **Execute workflow** to run it on the built-in sample data.\n2. Open **Audit Shipments** and edit the `RATE_CARD` object with your own courier's contracted rates.\n3. Replace **Sample Shipment Data** with a real source (Google Sheets, HTTP Request, or Read Binary File + Extract from File for an uploaded .xlsx/.csv) - just keep the same field names.\n4. **Filter: Overcharged Only** outputs your dispute list. **Summary Dashboard** outputs the same totals as the Excel Summary Dashboard tab.",
+        "height": 220,
+        "width": 760
+      },
+      "id": "90fa3d96-0ca2-4828-87f7-51e8239da87a",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        -40
+      ]
+    }
+  ],
+  "connections": {
+    "When clicking \"Execute workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Sample Shipment Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample Shipment Data": {
+      "main": [
+        [
+          {
+            "node": "Audit Shipments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit Shipments": {
+      "main": [
+        [
+          {
+            "node": "Filter: Overcharged Only",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Summary Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

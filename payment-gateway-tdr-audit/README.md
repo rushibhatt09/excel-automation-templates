@@ -13,6 +13,9 @@ every overcharge.
 
 [`Payment_Gateway_TDR_Audit_Template.xlsx`](./Payment_Gateway_TDR_Audit_Template.xlsx)
 
+Prefer automation over spreadsheets? The same audit logic is also available as a ready-to-import
+[n8n workflow](./n8n-workflow) - same rate card, same math, same sample results.
+
 ## What it looks like
 
 **TDR Rate Card** - your contracted rates by payment method:
