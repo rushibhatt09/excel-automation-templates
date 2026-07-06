@@ -38,3 +38,14 @@ so you end up with a ready-made list of overcharges to dispute.
 Replace the sample rate card (5 generic zones: Local, Regional, Metro-to-Metro, Rest of India, Special/NE)
 with your own courier's actual contracted rates. Zone names and structure are illustrative - adjust to match
 however your courier defines zones.
+
+## Use cases
+
+- **Monthly invoice reconciliation** - check every courier bill before you pay it, not after.
+- **Multi-courier comparison** - run the same shipment data through different couriers' rate cards to see
+  who's actually cheapest.
+- **Vendor negotiation leverage** - a documented pattern of overcharges (by zone, by weight slab) is hard
+  evidence when renegotiating a contract.
+- **RTO cost audits** - RTO charges are often billed incorrectly and rarely checked line-by-line.
+- **Onboarding a new courier/3PL** - validate their first month of billing against the agreed contract
+  before trusting them long-term.

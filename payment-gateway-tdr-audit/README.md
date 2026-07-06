@@ -36,3 +36,14 @@ every overcharge.
 
 Replace the sample TDR rate card (UPI, Debit Card, Credit Card, Netbanking, Wallet) with your own gateway's
 actual contracted rates - these vary a lot by provider and by your negotiated merchant agreement.
+
+## Use cases
+
+- **Monthly settlement reconciliation** - catch gateway overcharges before small per-transaction deductions
+  compound across thousands of transactions.
+- **Comparing gateways** - run the same transaction mix through multiple providers' rate cards to see true
+  cost per payment method.
+- **UPI/MDR compliance checks** - flag cases where a gateway is charging TDR on payment methods that should
+  be zero-cost under regulation (e.g. UPI).
+- **Renewal negotiations** - quantify actual overcharge history as evidence when renegotiating merchant
+  rates.

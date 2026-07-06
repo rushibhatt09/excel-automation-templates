@@ -21,6 +21,16 @@ No coding, no plugins, no sign-ups. Download a template, drop in your own data, 
 4. Replace the sample data (blue text, yellow-shaded cells) with your own numbers.
 5. The audit/summary tabs recalculate automatically - no formulas to write yourself.
 
+## Use cases
+
+- **Reconciliation** - check courier bills and payment gateway settlements before you pay/accept them, not after.
+- **Vendor negotiation** - a documented pattern of overcharges is real leverage when renegotiating contracts or rates.
+- **Onboarding new vendors** - validate a new courier's or gateway's first month of billing against the agreed contract.
+- **Packaging/warehouse planning** - avoid oversized boxes and packing-table surprises before a product launches.
+- **Portfolio/consulting proof** - hand a prospective employer or client a working template instead of just describing the skill.
+
+Each template's own README has a more detailed use-case list for that specific workflow.
+
 ## Why these exist
 
 Built out of real operational work auditing courier billing and payment settlements for an e-commerce

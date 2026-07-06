@@ -37,3 +37,12 @@ fits, which only works out to the cheapest option if the sizes are in ascending 
 
 Replace the 5 sample box sizes (XS to XL) and their costs with your actual packaging options, and swap in
 your real product catalog on the Product Data tab.
+
+## Use cases
+
+- **New product launch** - check packaging fit before a SKU goes live, instead of discovering it doesn't fit
+  at the packing table.
+- **Packaging cost optimization** - find products shipping in oversized boxes and quietly inflating
+  volumetric weight charges.
+- **Warehouse SOP** - give packers a definitive "which box for which SKU" reference instead of guesswork.
+- **Vendor/box-supplier planning** - estimate packaging spend before committing to a box size lineup.
