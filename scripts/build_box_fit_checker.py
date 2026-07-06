@@ -11,8 +11,8 @@ BLACK = Font(name=FONT, color="000000")
 GREEN = Font(name=FONT, color="008000")
 BOLD = Font(name=FONT, bold=True)
 HEADER_FONT = Font(name=FONT, bold=True, color="FFFFFF")
-HEADER_FILL = PatternFill("solid", fgColor="1F4E5F")
-YELLOW = PatternFill("solid", fgColor="FFFF00")
+HEADER_FILL = PatternFill(start_color="1F4E5F", end_color="1F4E5F", fill_type="solid")
+YELLOW = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
 THIN = Side(style="thin", color="CCCCCC")
 BORDER = Border(left=THIN, right=THIN, top=THIN, bottom=THIN)
 
@@ -87,7 +87,7 @@ for r, row in enumerate(box_rows, start=4):
             cell.font = BLUE
             cell.fill = YELLOW
             if c == 7:
-                cell.number_format = "Rs #,##0"
+                cell.number_format = "\"Rs\" #,##0"
         else:
             cell.font = BLACK
     vol_cell = ws.cell(row=r, column=8, value=f"=C{r}*D{r}*E{r}")
@@ -189,17 +189,17 @@ for i in range(len(products)):
     for c in (3, 4, 5, 6):
         ws.cell(row=r, column=c).number_format = "0.00"
     ws.cell(row=r, column=7).number_format = "#,##0"
-    ws.cell(row=r, column=14).number_format = "Rs #,##0"
+    ws.cell(row=r, column=14).number_format = "\"Rs\" #,##0"
     ws.cell(row=r, column=15).number_format = "0.0%"
 
 status_col = "P"
 last = LAST_ROW
 ws.conditional_formatting.add(f"{status_col}2:{status_col}{last}",
-    CellIsRule(operator="equal", formula=['"OK"'], fill=PatternFill("solid", fgColor="C6E0B4")))
+    CellIsRule(operator="equal", formula=['"OK"'], fill=PatternFill(start_color="C6E0B4", end_color="C6E0B4", fill_type="solid")))
 ws.conditional_formatting.add(f"{status_col}2:{status_col}{last}",
-    CellIsRule(operator="equal", formula=['"REVIEW - NO STANDARD BOX FITS"'], fill=PatternFill("solid", fgColor="F8CBAD")))
+    CellIsRule(operator="equal", formula=['"REVIEW - NO STANDARD BOX FITS"'], fill=PatternFill(start_color="F8CBAD", end_color="F8CBAD", fill_type="solid")))
 
-autosize(ws, [12, 24, 12, 12, 12, 12, 16, 14, 14, 14, 14, 14, 18, 20, 18, 26])
+autosize(ws, [12, 24, 12, 12, 12, 12, 16, 14, 14, 14, 14, 14, 18, 20, 18, 38])
 
 # ---------- Summary ----------
 ws = wb.create_sheet("Summary")
@@ -219,7 +219,7 @@ for label, formula in labels:
     cell = ws.cell(row=r, column=4, value=formula)
     cell.font = BLACK
     if "Rs" in label:
-        cell.number_format = "Rs #,##0"
+        cell.number_format = "\"Rs\" #,##0"
     if "%" in label:
         cell.number_format = "0.0%"
     r += 1

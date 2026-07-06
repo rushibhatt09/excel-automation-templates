@@ -11,8 +11,8 @@ BLACK = Font(name=FONT, color="000000")
 GREEN = Font(name=FONT, color="008000")
 BOLD = Font(name=FONT, bold=True)
 HEADER_FONT = Font(name=FONT, bold=True, color="FFFFFF")
-HEADER_FILL = PatternFill("solid", fgColor="1F4E5F")
-YELLOW = PatternFill("solid", fgColor="FFFF00")
+HEADER_FILL = PatternFill(start_color="1F4E5F", end_color="1F4E5F", fill_type="solid")
+YELLOW = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
 THIN = Side(style="thin", color="CCCCCC")
 BORDER = Border(left=THIN, right=THIN, top=THIN, bottom=THIN)
 
@@ -121,7 +121,7 @@ for r, row in enumerate(sample_settlements, start=2):
         cell.font = BLUE
         cell.border = BORDER
         if c in (4, 5, 6, 7):
-            cell.number_format = "Rs #,##0.00"
+            cell.number_format = "\"Rs\" #,##0.00"
 
 ws["A16"] = "Replace these sample rows with your own settlement export. Keep the same column order."
 ws["A16"].font = Font(name=FONT, italic=True, size=9, color="666666")
@@ -160,18 +160,18 @@ for i in range(len(sample_settlements)):
         ws.cell(row=r, column=c).border = BORDER
     ws.cell(row=r, column=4).number_format = "0.00%"
     for c in (3, 5, 6, 7, 8, 9, 10, 11):
-        ws.cell(row=r, column=c).number_format = "Rs #,##0.00"
+        ws.cell(row=r, column=c).number_format = "\"Rs\" #,##0.00"
 
 verdict_col = "L"
 last = LAST_ROW
 ws.conditional_formatting.add(f"{verdict_col}2:{verdict_col}{last}",
-    CellIsRule(operator="equal", formula=['"OVERCHARGED"'], fill=PatternFill("solid", fgColor="F8CBAD")))
+    CellIsRule(operator="equal", formula=['"OVERCHARGED"'], fill=PatternFill(start_color="F8CBAD", end_color="F8CBAD", fill_type="solid")))
 ws.conditional_formatting.add(f"{verdict_col}2:{verdict_col}{last}",
-    CellIsRule(operator="equal", formula=['"UNDERBILLED"'], fill=PatternFill("solid", fgColor="FFE699")))
+    CellIsRule(operator="equal", formula=['"UNDERBILLED"'], fill=PatternFill(start_color="FFE699", end_color="FFE699", fill_type="solid")))
 ws.conditional_formatting.add(f"{verdict_col}2:{verdict_col}{last}",
-    CellIsRule(operator="equal", formula=['"MATCH"'], fill=PatternFill("solid", fgColor="C6E0B4")))
+    CellIsRule(operator="equal", formula=['"MATCH"'], fill=PatternFill(start_color="C6E0B4", end_color="C6E0B4", fill_type="solid")))
 
-autosize(ws, [16, 16, 18, 16, 18, 18, 20, 18, 18, 18, 14, 14])
+autosize(ws, [16, 16, 18, 16, 18, 18, 20, 18, 18, 18, 14, 16])
 
 # ---------- Summary Dashboard ----------
 ws = wb.create_sheet("Summary Dashboard")
@@ -195,7 +195,7 @@ for label, formula in labels:
     cell = ws.cell(row=r, column=4, value=formula)
     cell.font = BLACK
     if "Rs" in label:
-        cell.number_format = "Rs #,##0.00"
+        cell.number_format = "\"Rs\" #,##0.00"
     r += 1
 
 ws.cell(row=r + 1, column=2, value="Payment-Method Breakdown").font = BOLD
@@ -212,11 +212,11 @@ for i, method in enumerate(["UPI", "Debit Card", "Credit Card", "Netbanking", "W
     ws.cell(row=rr, column=5, value=f'=SUMIF(Audit!$B$2:$B${LAST_ROW},B{rr},Audit!$G$2:$G${LAST_ROW})').font = BLACK
     ws.cell(row=rr, column=6, value=f'=SUMIFS(Audit!$K$2:$K${LAST_ROW},Audit!$B$2:$B${LAST_ROW},B{rr},Audit!$L$2:$L${LAST_ROW},"OVERCHARGED")').font = BLACK
     for c in (4, 5, 6):
-        ws.cell(row=rr, column=c).number_format = "Rs #,##0.00"
+        ws.cell(row=rr, column=c).number_format = "\"Rs\" #,##0.00"
     for c in range(2, 7):
         ws.cell(row=rr, column=c).border = BORDER
 
-autosize(ws, [3, 40, 14, 20, 20])
+autosize(ws, [3, 40, 14, 20, 20, 20])
 ws.column_dimensions["D"].width = 22
 
 wb.save(r"C:\Users\micro\OneDrive\Documents\excel-automation-templates\payment-gateway-tdr-audit\Payment_Gateway_TDR_Audit_Template.xlsx")

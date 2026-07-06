@@ -13,6 +13,14 @@ No coding, no plugins, no sign-ups. Download a template, drop in your own data, 
 | [Payment Gateway TDR Audit](./payment-gateway-tdr-audit) | Catches payment gateway settlement overcharges against your contracted TDR rate card |
 | [Volumetric Weight & Box-Fit Checker](./volumetric-weight-box-fit-checker) | Tells you the cheapest box each product actually fits in, and flags products with no good fit |
 
+## Preview
+
+![Courier Billing Audit preview](./courier-billing-audit/screenshots/audit.png)
+
+Every template follows the same pattern: a Rate Card/Library tab you customize, a Data tab you paste your
+own records into, and an Audit/Fit Checker tab that recalculates automatically and flags what needs
+attention. See each template's own README for full screenshots and a worked example.
+
 ## How to use any template
 
 1. Open the template folder and download the `.xlsx` file.
