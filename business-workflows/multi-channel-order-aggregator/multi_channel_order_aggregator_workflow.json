@@ -1,0 +1,157 @@
+{
+  "name": "Multi-Channel Order Aggregator",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "f1899405-b460-4c18-abee-bd2c5f12ab8f",
+      "name": "When clicking \"Execute workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Replace with your own source (Shopify/WooCommerce node, Google Sheets, HTTP Request, etc.)\nconst orders = [\n  { orderId: \"WEB-1001\", customerName: \"A. Sharma\", sku: \"SKU-2001\", qty: 2, amount: 1798, orderDate: \"2026-07-01\" },\n  { orderId: \"WEB-1002\", customerName: \"R. Iyer\", sku: \"SKU-2003\", qty: 1, amount: 399, orderDate: \"2026-07-01\" },\n  { orderId: \"WEB-1003\", customerName: \"P. Nair\", sku: \"SKU-2005\", qty: 3, amount: 897, orderDate: \"2026-07-02\" },\n];\nreturn orders.map(o => ({ json: { ...o, channel: \"Website\" } }));"
+      },
+      "id": "0b6d3ded-1abd-446b-8a55-507237a2f91a",
+      "name": "Website Orders",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        40,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Replace with your own source for this marketplace's order export/API\nconst orders = [\n  { orderId: \"MPA-5001\", customerName: \"S. Verma\", sku: \"SKU-2002\", qty: 1, amount: 899, orderDate: \"2026-07-01\" },\n  { orderId: \"MPA-5002\", customerName: \"K. Das\", sku: \"SKU-2001\", qty: 1, amount: 899, orderDate: \"2026-07-02\" },\n];\nreturn orders.map(o => ({ json: { ...o, channel: \"Marketplace A\" } }));"
+      },
+      "id": "0708e39b-2a38-43f6-98ce-d884a9095a83",
+      "name": "Marketplace A Orders",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        40,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Replace with your own source for this marketplace's order export/API\nconst orders = [\n  { orderId: \"MPB-9001\", customerName: \"T. Menon\", sku: \"SKU-2004\", qty: 1, amount: 1299, orderDate: \"2026-07-01\" },\n  { orderId: \"MPB-9002\", customerName: \"N. Rao\", sku: \"SKU-2006\", qty: 2, amount: 1798, orderDate: \"2026-07-02\" },\n  { orderId: \"MPB-9003\", customerName: \"V. Pillai\", sku: \"SKU-2002\", qty: 1, amount: 899, orderDate: \"2026-07-02\" },\n];\nreturn orders.map(o => ({ json: { ...o, channel: \"Marketplace B\" } }));"
+      },
+      "id": "2dae5072-ad75-4775-b564-9a56922873f0",
+      "name": "Marketplace B Orders",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        40,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const website = $(\"Website Orders\").all().map(i => i.json);\nconst mpA = $(\"Marketplace A Orders\").all().map(i => i.json);\nconst mpB = $(\"Marketplace B Orders\").all().map(i => i.json);\nreturn [...website, ...mpA, ...mpB].map(o => ({ json: o }));"
+      },
+      "id": "d5d99799-00f3-4ff6-bd7c-23d31d9fd427",
+      "name": "Merge All Channels",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map(i => i.json);\nconst totalOrders = items.length;\nconst totalRevenue = items.reduce((s,i)=>s+i.amount, 0);\nconst channels = [...new Set(items.map(i => i.channel))];\nconst channelBreakdown = channels.map(c => {\n  const ci = items.filter(i => i.channel === c);\n  return { channel: c, orders: ci.length, revenue: ci.reduce((s,i)=>s+i.amount,0) };\n});\nconst unitsBySku = {};\nitems.forEach(i => { unitsBySku[i.sku] = (unitsBySku[i.sku] || 0) + i.qty; });\nconst topSkus = Object.entries(unitsBySku).sort((a,b)=>b[1]-a[1]).map(([sku, units]) => ({ sku, units }));\nreturn [{ json: { totalOrders, totalRevenue, channelBreakdown, topSkusByUnits: topSkus } }];"
+      },
+      "id": "6d93b86b-c2fa-49ad-b949-5e617bd8b4f0",
+      "name": "Daily Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Multi-Channel Order Aggregator\n\nCombines orders from multiple sales channels into one unified daily log with totals.\n\n1. Replace **Website Orders**, **Marketplace A Orders**, **Marketplace B Orders** with your own sources (Shopify/WooCommerce nodes, marketplace APIs, Google Sheets, etc.) - add or remove channel nodes as needed, just update the names referenced in **Merge All Channels**.\n2. **Merge All Channels** combines everything into one list, tagged by channel.\n3. **Daily Summary** gives total orders, revenue by channel, and top SKUs by units sold.\n\nNote: all three channel nodes run in sequence (not parallel) so **Merge All Channels** can reliably reference all of them by name once they've all executed.",
+        "height": 260,
+        "width": 780
+      },
+      "id": "dbb08c70-25d0-4856-9d5a-6c19280c5e17",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        -80
+      ]
+    }
+  ],
+  "connections": {
+    "When clicking \"Execute workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Website Orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Website Orders": {
+      "main": [
+        [
+          {
+            "node": "Marketplace A Orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marketplace A Orders": {
+      "main": [
+        [
+          {
+            "node": "Marketplace B Orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marketplace B Orders": {
+      "main": [
+        [
+          {
+            "node": "Merge All Channels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge All Channels": {
+      "main": [
+        [
+          {
+            "node": "Daily Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

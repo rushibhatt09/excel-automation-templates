@@ -1,0 +1,127 @@
+{
+  "name": "Customer Support Ticket Triage",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "53e10dcb-717f-43a7-89c5-1c8017500f5e",
+      "name": "When clicking \"Execute workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Replace this node with your own source (helpdesk API, Gmail trigger, Google Sheets, etc.)\nconst tickets = [\n  { ticketId: \"T-1001\", customerName: \"A. Sharma\", channel: \"Email\", subject: \"Where is my order?\", message: \"It has been 6 days and my order is still not delivered, please help.\" },\n  { ticketId: \"T-1002\", customerName: \"R. Iyer\", channel: \"Chat\", subject: \"Product arrived broken\", message: \"The bottle was damaged and leaking when it arrived, this is unacceptable.\" },\n  { ticketId: \"T-1003\", customerName: \"P. Nair\", channel: \"Email\", subject: \"Refund request\", message: \"I want to cancel my order and get a refund immediately, this is urgent.\" },\n  { ticketId: \"T-1004\", customerName: \"S. Verma\", channel: \"Instagram\", subject: \"Question about ingredients\", message: \"Does this serum contain any fragrance?\" },\n  { ticketId: \"T-1005\", customerName: \"K. Das\", channel: \"Chat\", subject: \"Tracking not updating\", message: \"My tracking link has not moved in 3 days, is my package lost?\" },\n  { ticketId: \"T-1006\", customerName: \"T. Menon\", channel: \"Email\", subject: \"Wrong item received\", message: \"I ordered the day cream but received the night cream instead.\" },\n];\nreturn tickets.map(t => ({ json: t }));"
+      },
+      "id": "40e6094c-7b41-4f21-a994-2e6dac71f53a",
+      "name": "Sample Support Tickets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        40,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// EDIT THIS: keyword rules for category and urgency detection\nconst CATEGORY_RULES = [\n  { category: \"Shipping\", keywords: [\"where is my order\", \"tracking\", \"delivery\", \"delivered\", \"shipped\", \"lost\"] },\n  { category: \"Product Issue\", keywords: [\"broken\", \"damaged\", \"defective\", \"leaking\", \"wrong item\"] },\n  { category: \"Billing\", keywords: [\"refund\", \"cancel\", \"charged\", \"payment\", \"invoice\"] },\n];\nconst URGENT_KEYWORDS = [\"urgent\", \"immediately\", \"asap\", \"unacceptable\", \"angry\", \"still not\"];\n\nfunction detectCategory(text) {\n  for (const rule of CATEGORY_RULES) {\n    if (rule.keywords.some(k => text.includes(k))) return rule.category;\n  }\n  return \"General\";\n}\nfunction isUrgent(text) {\n  return URGENT_KEYWORDS.some(k => text.includes(k));\n}\n\nconst ROUTE_BY_CATEGORY = {\n  \"Shipping\": \"Logistics Team\",\n  \"Product Issue\": \"Quality/Returns Team\",\n  \"Billing\": \"Finance Team\",\n  \"General\": \"General Support Queue\",\n};\n\nreturn $input.all().map(item => {\n  const t = item.json;\n  const text = `${t.subject} ${t.message}`.toLowerCase();\n  const category = detectCategory(text);\n  const urgent = isUrgent(text);\n  const priority = urgent ? \"High\" : (category === \"General\" ? \"Low\" : \"Medium\");\n  const route = ROUTE_BY_CATEGORY[category];\n  return { json: { ...t, category, priority, route } };\n});"
+      },
+      "id": "18b0f534-0f5b-4109-8968-468fde01db44",
+      "name": "Categorize & Prioritize Tickets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().filter(item => item.json.priority === \"High\");"
+      },
+      "id": "12eb26c3-56c6-40c3-8906-79ba8ec3684a",
+      "name": "Filter: High Priority Only",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map(i => i.json);\nconst categories = [...new Set(items.map(i => i.category))];\nconst categoryBreakdown = categories.map(c => ({ category: c, tickets: items.filter(i => i.category === c).length }));\nconst priorities = [\"High\", \"Medium\", \"Low\"];\nconst priorityBreakdown = priorities.map(p => ({ priority: p, tickets: items.filter(i => i.priority === p).length }));\nconst routes = [...new Set(items.map(i => i.route))];\nconst routeBreakdown = routes.map(r => ({ route: r, tickets: items.filter(i => i.route === r).length }));\nreturn [{ json: { totalTickets: items.length, categoryBreakdown, priorityBreakdown, routeBreakdown } }];"
+      },
+      "id": "6873d747-c04f-4ea2-9780-1f4684e473ce",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Customer Support Ticket Triage\n\nCategorizes incoming tickets by keyword, assigns a priority, and routes each to the right team.\n\n1. Replace **Sample Support Tickets** with your own source (helpdesk API, Gmail trigger, Google Sheets, etc.) - keep `subject`/`message` fields for keyword matching.\n2. Open **Categorize & Prioritize Tickets** and edit `CATEGORY_RULES`, `URGENT_KEYWORDS`, and `ROUTE_BY_CATEGORY` to match your own categories and team names.\n3. **Filter: High Priority Only** outputs tickets needing immediate attention.\n4. **Summary** gives ticket counts by category, priority, and route.",
+        "height": 220,
+        "width": 780
+      },
+      "id": "84074edf-7411-4885-b16b-59c50b7e4ea5",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        -60
+      ]
+    }
+  ],
+  "connections": {
+    "When clicking \"Execute workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Sample Support Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample Support Tickets": {
+      "main": [
+        [
+          {
+            "node": "Categorize & Prioritize Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Categorize & Prioritize Tickets": {
+      "main": [
+        [
+          {
+            "node": "Filter: High Priority Only",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

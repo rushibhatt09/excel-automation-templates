@@ -18,6 +18,7 @@ attention.
 - [3. Volumetric Weight & Box-Fit Checker](#3-volumetric-weight--box-fit-checker)
 - [How to use any template](#how-to-use-any-template)
 - [Google Sheets compatibility](#google-sheets-compatibility)
+- [Business Automation Workflows (n8n)](#business-automation-workflows-n8n)
 - [Why these exist](#why-these-exist)
 - [License](#license)
 
@@ -348,6 +349,22 @@ that behave identically in Google Sheets - `IF`, `AND`, `INDEX`, `MATCH`, `MAX`,
 To use a template in Google Sheets: File > Import > Upload the `.xlsx`, choose "Insert new sheet(s)" or
 "Replace spreadsheet." Everything - formulas, conditional formatting colors, frozen header rows - should
 carry over as-is. If you spot any formula that doesn't translate cleanly, please open an issue.
+
+## Business Automation Workflows (n8n)
+
+Beyond the 3 audit templates above, the [`business-workflows/`](./business-workflows) folder has 4 more
+standalone n8n workflows for common ops/admin tasks - no coding, no credentials required to try them:
+
+| Workflow | What it solves |
+|---|---|
+| [Low-Stock Reorder Alert](./business-workflows/low-stock-reorder-alert) | Flags SKUs below their reorder point and suggests how much to order |
+| [Multi-Channel Order Aggregator](./business-workflows/multi-channel-order-aggregator) | Combines orders from multiple sales channels into one daily log with totals |
+| [Customer Support Ticket Triage](./business-workflows/customer-support-ticket-triage) | Categorizes and routes support tickets by keyword and urgency |
+| [RTO Pattern Analysis](./business-workflows/rto-pattern-analysis) | Flags pincodes/SKUs with unusually high return-to-origin rates |
+
+Each of the 3 audit templates also has a "next step" n8n extension workflow in its own `n8n-workflow/`
+folder - e.g. the Courier Billing Audit's [dispute email drafter](./courier-billing-audit/n8n-workflow)
+takes the flagged overcharges and drafts ready-to-send dispute emails automatically.
 
 ## Why these exist
 

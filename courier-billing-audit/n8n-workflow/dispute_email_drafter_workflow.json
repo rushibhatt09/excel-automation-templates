@@ -1,0 +1,103 @@
+{
+  "name": "Courier Billing Audit - Dispute Email Drafter",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "89ac1195-af8a-4faa-9c19-dddcc2c51e89",
+      "name": "When clicking \"Execute workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// This is normally the \"Filter: Overcharged Only\" output from the Courier Billing Audit workflow.\n// Sample cases below match what that workflow finds on its own sample data.\nconst overcharges = [\n  { awb: \"AWB1001\", zone: \"A\", billedAmount: 75, totalExpectedCharge: 50, variance: 25 },\n  { awb: \"AWB1003\", zone: \"C\", billedAmount: 173, totalExpectedCharge: 155, variance: 18 },\n  { awb: \"AWB1004\", zone: \"D\", billedAmount: 200, totalExpectedCharge: 160, variance: 40 },\n  { awb: \"AWB1005\", zone: \"E\", billedAmount: 560, totalExpectedCharge: 500, variance: 60 },\n];\nreturn overcharges.map(o => ({ json: o }));"
+      },
+      "id": "ef9ad393-7711-4099-ab90-68c703282ffd",
+      "name": "Sample Overcharged Shipments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        40,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const s = item.json;\n  const subject = `Billing Dispute - ${s.awb} - Zone ${s.zone} Overcharge of Rs ${s.variance}`;\n  const body = `Hi Team,\\n\\nWe've identified a billing discrepancy on shipment ${s.awb} (Zone ${s.zone}):\\n` +\n    `- Billed Amount: Rs ${s.billedAmount}\\n` +\n    `- Expected Amount (per our contracted rate card): Rs ${s.totalExpectedCharge}\\n` +\n    `- Overcharge: Rs ${s.variance}\\n\\n` +\n    `Please review and process a refund/credit for the difference.\\n\\nThanks,\\n[Your Name]`;\n  return { json: { ...s, emailSubject: subject, emailBody: body } };\n});"
+      },
+      "id": "e574368f-f906-4616-8c30-b1f445194933",
+      "name": "Draft Individual Dispute Emails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        340,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map(i => i.json);\nconst totalOvercharge = Math.round(items.reduce((s,i)=>s+i.variance,0) * 100) / 100;\nconst lines = items.map(i => `- ${i.awb} (Zone ${i.zone}): Billed Rs ${i.billedAmount}, Expected Rs ${i.totalExpectedCharge}, Overcharge Rs ${i.variance}`).join('\\n');\nconst subject = `Monthly Billing Dispute - ${items.length} Overcharged Shipments - Rs ${totalOvercharge} Refund Requested`;\nconst body = `Hi Team,\\n\\nOur monthly billing audit found ${items.length} shipments overcharged, totaling Rs ${totalOvercharge} in disputed charges:\\n\\n${lines}\\n\\nPlease review and process a refund/credit for the total overcharge amount.\\n\\nThanks,\\n[Your Name]`;\nreturn [{ json: { emailSubject: subject, emailBody: body, totalCases: items.length, totalOvercharge } }];"
+      },
+      "id": "219423e2-b9e4-4612-9187-51b52ddeef44",
+      "name": "Draft Consolidated Dispute Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        340,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Courier Dispute Email Drafter\n\nTakes the overcharged-shipment list (from the Courier Billing Audit workflow's \"Filter: Overcharged Only\" output) and drafts dispute email text - one per shipment, plus one consolidated monthly email.\n\n1. Replace **Sample Overcharged Shipments** with the real output of the audit workflow (or a Google Sheets/HTTP node reading your own flagged list).\n2. Connect a **Gmail/Outlook/SMTP** node after either drafting node to actually send - this workflow only drafts, it never sends anything on its own.",
+        "height": 200,
+        "width": 760
+      },
+      "id": "85ba41c7-ce9c-4579-a901-6133764e9f8b",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        -60
+      ]
+    }
+  ],
+  "connections": {
+    "When clicking \"Execute workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Sample Overcharged Shipments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample Overcharged Shipments": {
+      "main": [
+        [
+          {
+            "node": "Draft Individual Dispute Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Draft Consolidated Dispute Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

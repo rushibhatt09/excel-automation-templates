@@ -23,3 +23,11 @@ The same fit-check logic as `Volumetric_Weight_Box_Fit_Checker.xlsx`, as an impo
 
 Verified to produce identical results to the Excel template on the same sample data: 10 products checked, 1
 flagged for review, ₹111 total recommended packaging cost.
+
+## Next step: auto-draft the packaging review notice
+
+[`packaging_review_notice_workflow.json`](./packaging_review_notice_workflow.json) takes the "Filter: Needs
+Review" output above and drafts an internal notice for your packaging/procurement team - one per product,
+plus one consolidated notice. Unlike the two audit workflows, this isn't a vendor dispute (there's no vendor
+overcharging you for a packaging-fit issue) - it's an internal alert. It only drafts; connect a
+Slack/Email/Teams node to actually send. Import it the same way as above.

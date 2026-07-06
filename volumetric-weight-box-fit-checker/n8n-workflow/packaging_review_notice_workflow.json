@@ -1,0 +1,103 @@
+{
+  "name": "Box-Fit Checker - Packaging Review Notice Drafter",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "638d1ff6-0731-47e2-a9ae-38307ef52826",
+      "name": "When clicking \"Execute workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// This is normally the \"Filter: Needs Review\" output from the Box-Fit Checker workflow.\nconst noFits = [\n  { sku: \"SKU-1010\", name: \"Oversized Appliance\", length: 60, width: 40, height: 30, weight: 15 },\n];\nreturn noFits.map(o => ({ json: o }));"
+      },
+      "id": "467b3aec-ee7a-4834-8619-adb74291ebdc",
+      "name": "Sample No-Fit Products",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        40,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const s = item.json;\n  const subject = `Packaging Review Needed - ${s.sku} - No Standard Box Fits`;\n  const body = `Hi Team,\\n\\n${s.name} (SKU ${s.sku}, ${s.length}x${s.width}x${s.height} cm, ${s.weight} kg) does not fit ` +\n    `any box in our current packaging library.\\n\\n` +\n    `Please either source a custom box for this SKU or confirm an alternate shipping method.\\n\\nThanks,\\n[Your Name]`;\n  return { json: { ...s, noticeSubject: subject, noticeBody: body } };\n});"
+      },
+      "id": "367857ac-eb07-440f-8205-b8d924ab8eb7",
+      "name": "Draft Individual Review Notices",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        340,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map(i => i.json);\nconst lines = items.map(i => `- ${i.sku} (${i.name}): ${i.length}x${i.width}x${i.height} cm, ${i.weight} kg`).join('\\n');\nconst subject = `Packaging Review Needed - ${items.length} Product(s) With No Standard Box Fit`;\nconst body = `Hi Team,\\n\\nThis run of the Box-Fit Checker found ${items.length} product(s) that don't fit any box in our packaging library:\\n\\n${lines}\\n\\nPlease review and either source custom boxes or confirm alternate shipping for these SKUs.\\n\\nThanks,\\n[Your Name]`;\nreturn [{ json: { noticeSubject: subject, noticeBody: body, totalCases: items.length } }];"
+      },
+      "id": "55e21f03-41b2-40d0-909f-6e3249f8e96b",
+      "name": "Draft Consolidated Review Notice",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        340,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Packaging Review Notice Drafter\n\nTakes the no-fit product list (from the Box-Fit Checker workflow's \"Filter: Needs Review\" output) and drafts an internal notice for your packaging/procurement team - one per product, plus one consolidated notice. This is an internal alert, not a vendor dispute (there's no vendor to dispute with for a packaging-fit issue).\n\n1. Replace **Sample No-Fit Products** with the real output of the Box-Fit Checker workflow.\n2. Connect a **Slack/Email/Teams** node after either drafting node to actually send it.",
+        "height": 220,
+        "width": 760
+      },
+      "id": "6ae8ca7f-cec1-47dd-9374-e6987be3dbb2",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        -60
+      ]
+    }
+  ],
+  "connections": {
+    "When clicking \"Execute workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Sample No-Fit Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample No-Fit Products": {
+      "main": [
+        [
+          {
+            "node": "Draft Individual Review Notices",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Draft Consolidated Review Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

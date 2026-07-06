@@ -22,3 +22,10 @@ The same audit logic as `Payment_Gateway_TDR_Audit_Template.xlsx`, as an importa
 
 Verified to produce identical results to the Excel template on the same sample data: 9 of 12 transactions
 overcharged, ₹293 refund claimable.
+
+## Next step: auto-draft the dispute email
+
+[`dispute_email_drafter_workflow.json`](./dispute_email_drafter_workflow.json) takes the "Filter: Overcharged
+Only" output above and drafts ready-to-send dispute email text - one per transaction, plus one consolidated
+monthly email you can send to your gateway's settlement team. It only drafts; connect a Gmail/Outlook/SMTP
+node to actually send. Import it the same way as above.

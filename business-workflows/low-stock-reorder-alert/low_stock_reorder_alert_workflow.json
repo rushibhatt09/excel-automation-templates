@@ -1,0 +1,127 @@
+{
+  "name": "Low-Stock Reorder Alert",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "d65ebb48-9efd-42d8-862e-0110f49a0503",
+      "name": "When clicking \"Execute workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Replace this node with your own source (Google Sheets, HTTP Request, database, etc.)\nconst inventory = [\n  { sku: \"SKU-2001\", name: \"Vitamin C Serum 30ml\", currentStock: 40, avgDailySales: 8, leadTimeDays: 7, safetyBufferDays: 3, supplier: \"Supplier A\" },\n  { sku: \"SKU-2002\", name: \"Sunscreen SPF50\", currentStock: 120, avgDailySales: 10, leadTimeDays: 10, safetyBufferDays: 4, supplier: \"Supplier B\" },\n  { sku: \"SKU-2003\", name: \"Face Wash 100ml\", currentStock: 15, avgDailySales: 6, leadTimeDays: 5, safetyBufferDays: 2, supplier: \"Supplier A\" },\n  { sku: \"SKU-2004\", name: \"Night Repair Cream\", currentStock: 60, avgDailySales: 3, leadTimeDays: 14, safetyBufferDays: 5, supplier: \"Supplier C\" },\n  { sku: \"SKU-2005\", name: \"Lip Balm Combo\", currentStock: 8, avgDailySales: 4, leadTimeDays: 6, safetyBufferDays: 3, supplier: \"Supplier B\" },\n  { sku: \"SKU-2006\", name: \"Hair Serum 50ml\", currentStock: 200, avgDailySales: 5, leadTimeDays: 12, safetyBufferDays: 4, supplier: \"Supplier C\" },\n];\nreturn inventory.map(i => ({ json: i }));"
+      },
+      "id": "17063249-a0dd-432f-af69-245e56cf9de9",
+      "name": "Sample Inventory Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        40,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const s = item.json;\n  const safetyStock = s.avgDailySales * s.safetyBufferDays;\n  const reorderPoint = Math.ceil(s.avgDailySales * s.leadTimeDays + safetyStock);\n  const needsReorder = s.currentStock <= reorderPoint;\n  const targetStock = Math.ceil(reorderPoint * 1.5);\n  const suggestedReorderQty = needsReorder ? Math.max(0, targetStock - s.currentStock) : 0;\n  return { json: { ...s, safetyStock, reorderPoint, needsReorder, suggestedReorderQty } };\n});"
+      },
+      "id": "801d5016-63a2-4461-84c9-9ac969a21e3d",
+      "name": "Calculate Reorder Points",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().filter(item => item.json.needsReorder);"
+      },
+      "id": "5514962f-a707-4781-95da-7dd507b67fd6",
+      "name": "Filter: Needs Reorder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map(i => i.json);\nconst needsReorder = items.filter(i => i.needsReorder);\nconst totalUnitsToReorder = needsReorder.reduce((s,i)=>s+i.suggestedReorderQty, 0);\nconst suppliers = [...new Set(items.map(i => i.supplier))];\nconst supplierBreakdown = suppliers.map(sup => {\n  const si = needsReorder.filter(i => i.supplier === sup);\n  return { supplier: sup, skusToReorder: si.length, unitsToReorder: si.reduce((s,i)=>s+i.suggestedReorderQty,0) };\n});\nreturn [{ json: {\n  totalSkusChecked: items.length,\n  skusNeedingReorder: needsReorder.length,\n  totalUnitsToReorder,\n  supplierBreakdown,\n}}];"
+      },
+      "id": "052e0960-f99d-454e-b74a-cbc565c11d1d",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Low-Stock Reorder Alert\n\nCompares current stock to a reorder point (lead time + safety buffer, based on average daily sales) and suggests how much to reorder.\n\n1. Replace **Sample Inventory Data** with your own source (Google Sheets, HTTP Request, database query, etc.) - keep the same field names.\n2. **Calculate Reorder Points** does the math - reorder point = avg daily sales x (lead time + safety buffer days).\n3. **Filter: Needs Reorder** outputs just the SKUs below their reorder point.\n4. **Summary** gives total units to reorder, broken down by supplier - handy for splitting purchase orders.\n5. Connect a Slack/Email node after Filter or Summary to get alerted automatically.",
+        "height": 240,
+        "width": 780
+      },
+      "id": "51ca7f6c-4815-4b38-9bc2-ca69eb92a25e",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        -60
+      ]
+    }
+  ],
+  "connections": {
+    "When clicking \"Execute workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Sample Inventory Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample Inventory Data": {
+      "main": [
+        [
+          {
+            "node": "Calculate Reorder Points",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Reorder Points": {
+      "main": [
+        [
+          {
+            "node": "Filter: Needs Reorder",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
