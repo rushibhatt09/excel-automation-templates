@@ -1,0 +1,32 @@
+# Excel Automation Templates
+
+Free, no-code Excel/Google Sheets templates for the spreadsheet work that admin, ops, and finance folks
+end up doing by hand every month - checking bills, catching overcharges, and making sure the numbers add up.
+
+No coding, no plugins, no sign-ups. Download a template, drop in your own data, and the formulas do the rest.
+
+## Templates
+
+| Template | What it solves |
+|---|---|
+| [Courier Billing Audit](./courier-billing-audit) | Catches courier/logistics overcharges - wrong zone, wrong weight slab, inflated COD/RTO charges |
+| [Payment Gateway TDR Audit](./payment-gateway-tdr-audit) | Catches payment gateway settlement overcharges against your contracted TDR rate card |
+| [Volumetric Weight & Box-Fit Checker](./volumetric-weight-box-fit-checker) | Tells you the cheapest box each product actually fits in, and flags products with no good fit |
+
+## How to use any template
+
+1. Open the template folder and download the `.xlsx` file.
+2. Open it in Excel or upload it to Google Sheets.
+3. Every workbook has a **Read Me** tab first - follow its steps.
+4. Replace the sample data (blue text, yellow-shaded cells) with your own numbers.
+5. The audit/summary tabs recalculate automatically - no formulas to write yourself.
+
+## Why these exist
+
+Built out of real operational work auditing courier billing and payment settlements for an e-commerce
+brand - turned into generic templates anyone can reuse, with all company-specific data stripped out and
+replaced with illustrative sample numbers.
+
+## License
+
+MIT - use, modify, and share freely.
