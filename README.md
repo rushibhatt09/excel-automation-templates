@@ -7,19 +7,43 @@ No coding, no plugins, no sign-ups. Download a template, drop in your own data, 
 
 ## Templates
 
-| Template | What it solves |
-|---|---|
-| [Courier Billing Audit](./courier-billing-audit) | Catches courier/logistics overcharges - wrong zone, wrong weight slab, inflated COD/RTO charges |
-| [Payment Gateway TDR Audit](./payment-gateway-tdr-audit) | Catches payment gateway settlement overcharges against your contracted TDR rate card |
-| [Volumetric Weight & Box-Fit Checker](./volumetric-weight-box-fit-checker) | Tells you the cheapest box each product actually fits in, and flags products with no good fit |
-
-## Preview
-
-![Courier Billing Audit preview](./courier-billing-audit/screenshots/audit.png)
-
 Every template follows the same pattern: a Rate Card/Library tab you customize, a Data tab you paste your
 own records into, and an Audit/Fit Checker tab that recalculates automatically and flags what needs
-attention. See each template's own README for full screenshots and a worked example.
+attention.
+
+### 1. [Courier Billing Audit](./courier-billing-audit)
+
+Catches courier/logistics overcharges - wrong zone, wrong weight slab, inflated COD/RTO charges. Feed it
+your rate card and shipment data; it flags every mismatch and totals up your refund claim.
+
+![Courier Billing Audit - Audit tab](./courier-billing-audit/screenshots/audit.png)
+
+In the sample data: **9 of 12 shipments overcharged, ₹323 in refund-claimable overcharges**, broken down by
+zone. Full screenshots (Rate Card, Audit, Summary Dashboard) and a worked example walking through the math
+row-by-row are in the [template README](./courier-billing-audit/README.md).
+
+### 2. [Payment Gateway TDR Audit](./payment-gateway-tdr-audit)
+
+Catches payment gateway settlement overcharges against your contracted TDR (Transaction Discount Rate) rate
+card. Feed it your rate card and settlement data; it flags every transaction where more was deducted than
+agreed.
+
+![Payment Gateway TDR Audit - Audit tab](./payment-gateway-tdr-audit/screenshots/audit.png)
+
+In the sample data: **9 of 12 transactions overcharged, ₹293 in refund-claimable overcharges**, broken down
+by payment method. Full screenshots (TDR Rate Card, Audit, Summary Dashboard) and a worked example are in
+the [template README](./payment-gateway-tdr-audit/README.md).
+
+### 3. [Volumetric Weight & Box-Fit Checker](./volumetric-weight-box-fit-checker)
+
+Tells you the cheapest box each product actually fits in, and flags products with no good fit - before it
+becomes a packing-table problem or an oversized shipping bill.
+
+![Box-Fit Checker - Fit Checker tab](./volumetric-weight-box-fit-checker/screenshots/fit-checker.png)
+
+In the sample data: **10 products checked, 1 flagged for review, ₹111 total recommended packaging cost**.
+Full screenshots (Box Library, Fit Checker, Summary) and a worked example are in the
+[template README](./volumetric-weight-box-fit-checker/README.md).
 
 ## How to use any template
 
