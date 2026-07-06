@@ -83,6 +83,10 @@ as the example:
 Replace the 5 sample box sizes (XS to XL) and their costs with your actual packaging options, and swap in
 your real product catalog on the Product Data tab.
 
+The Fit Checker and Summary formulas are pre-built for up to 200 products - paste in fewer or more rows and
+the totals adjust automatically, no formulas to touch. If you have more than 200 products, select the last
+row of the Fit Checker tab and drag-fill it down as far as you need.
+
 ## Use cases
 
 - **New product launch** - check packaging fit before a SKU goes live, instead of discovering it doesn't fit

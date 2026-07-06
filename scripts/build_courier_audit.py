@@ -134,11 +134,14 @@ for r, row in enumerate(sample_shipments, start=2):
         if c in (6, 7, 8, 9, 11):
             cell.number_format = "0.00"
 
-ws["A16"] = "Replace these sample rows with your own courier billing export. Keep the same column order (paste-special > values if columns differ)."
-ws["A16"].font = Font(name=FONT, italic=True, size=9, color="666666")
+MAX_ROWS = 200  # Audit/Summary formulas are pre-built this far down so extra pasted rows aren't silently dropped
+NOTE_ROW = MAX_ROWS + 10  # kept well beyond MAX_ROWS so it never collides with the blank-row guard on column A
+
+ws[f"A{NOTE_ROW}"] = "Replace these sample rows with your own courier billing export. Keep the same column order (paste-special > values if columns differ)."
+ws[f"A{NOTE_ROW}"].font = Font(name=FONT, italic=True, size=9, color="666666")
 autosize(ws, [16, 12, 8, 12, 14, 14, 10, 10, 10, 14, 22, 22])
 
-LAST_ROW = 1 + len(sample_shipments)
+LAST_ROW = 1 + MAX_ROWS
 
 # ---------- Sheet: Audit ----------
 ws = wb.create_sheet("Audit")
@@ -153,28 +156,33 @@ for i, h in enumerate(au_headers, start=1):
 style_header(ws, 1, len(au_headers))
 ws.freeze_panes = "A2"
 
-for i in range(len(sample_shipments)):
+for i in range(MAX_ROWS):
     r = i + 2
     sd = i + 2  # row in Shipment Data (same offset)
-    ws.cell(row=r, column=1, value=f"='Shipment Data'!A{sd}").font = GREEN
-    ws.cell(row=r, column=2, value=f"='Shipment Data'!C{sd}").font = GREEN
-    ws.cell(row=r, column=3, value=f"='Shipment Data'!D{sd}").font = GREEN
-    ws.cell(row=r, column=4, value=f"='Shipment Data'!J{sd}").font = GREEN
-    ws.cell(row=r, column=5, value=f"='Shipment Data'!F{sd}").font = GREEN
-    ws.cell(row=r, column=6, value=f"=('Shipment Data'!G{sd}*'Shipment Data'!H{sd}*'Shipment Data'!I{sd})/5000").font = BLACK
-    ws.cell(row=r, column=7, value=f"=CEILING(MAX(E{r},F{r}),0.5)").font = BLACK
-    ws.cell(row=r, column=8, value=f"='Shipment Data'!K{sd}").font = GREEN
-    ws.cell(row=r, column=9, value=f'=IF(H{r}>G{r},"COURIER OVER-ROUNDED WEIGHT","OK")').font = BLACK
-    ws.cell(row=r, column=10, value=f"=INDEX('Rate Card'!$D$4:$D$8,MATCH(B{r},'Rate Card'!$A$4:$A$8,0))").font = GREEN
-    ws.cell(row=r, column=11, value=(f"=ROUND((G{r}-INDEX('Rate Card'!$C$4:$C$8,MATCH(B{r},'Rate Card'!$A$4:$A$8,0)))/0.5,0)"
+    guard = f"'Shipment Data'!A{sd}=\"\""
+
+    def blank_if_empty(inner):
+        return f'=IF({guard},"",{inner})'
+
+    ws.cell(row=r, column=1, value=blank_if_empty(f"'Shipment Data'!A{sd}")).font = GREEN
+    ws.cell(row=r, column=2, value=blank_if_empty(f"'Shipment Data'!C{sd}")).font = GREEN
+    ws.cell(row=r, column=3, value=blank_if_empty(f"'Shipment Data'!D{sd}")).font = GREEN
+    ws.cell(row=r, column=4, value=blank_if_empty(f"'Shipment Data'!J{sd}")).font = GREEN
+    ws.cell(row=r, column=5, value=blank_if_empty(f"'Shipment Data'!F{sd}")).font = GREEN
+    ws.cell(row=r, column=6, value=blank_if_empty(f"('Shipment Data'!G{sd}*'Shipment Data'!H{sd}*'Shipment Data'!I{sd})/5000")).font = BLACK
+    ws.cell(row=r, column=7, value=blank_if_empty(f"CEILING(MAX(E{r},F{r}),0.5)")).font = BLACK
+    ws.cell(row=r, column=8, value=blank_if_empty(f"'Shipment Data'!K{sd}")).font = GREEN
+    ws.cell(row=r, column=9, value=blank_if_empty(f'IF(H{r}>G{r},"COURIER OVER-ROUNDED WEIGHT","OK")')).font = BLACK
+    ws.cell(row=r, column=10, value=blank_if_empty(f"INDEX('Rate Card'!$D$4:$D$8,MATCH(B{r},'Rate Card'!$A$4:$A$8,0))")).font = GREEN
+    ws.cell(row=r, column=11, value=blank_if_empty(f"ROUND((G{r}-INDEX('Rate Card'!$C$4:$C$8,MATCH(B{r},'Rate Card'!$A$4:$A$8,0)))/0.5,0)"
                                        f"*INDEX('Rate Card'!$E$4:$E$8,MATCH(B{r},'Rate Card'!$A$4:$A$8,0))")).font = GREEN
-    ws.cell(row=r, column=12, value=(f'=IF(C{r}="COD",MAX(\'Shipment Data\'!E{sd}*INDEX(\'Rate Card\'!$F$4:$F$8,MATCH(B{r},\'Rate Card\'!$A$4:$A$8,0)),'
+    ws.cell(row=r, column=12, value=blank_if_empty(f'IF(C{r}="COD",MAX(\'Shipment Data\'!E{sd}*INDEX(\'Rate Card\'!$F$4:$F$8,MATCH(B{r},\'Rate Card\'!$A$4:$A$8,0)),'
                                        f"INDEX('Rate Card'!$G$4:$G$8,MATCH(B{r},'Rate Card'!$A$4:$A$8,0))),0)")).font = GREEN
-    ws.cell(row=r, column=13, value=(f'=IF(D{r}="RTO",(J{r}+K{r})*INDEX(\'Rate Card\'!$H$4:$H$8,MATCH(B{r},\'Rate Card\'!$A$4:$A$8,0)),0)')).font = GREEN
-    ws.cell(row=r, column=14, value=f"=J{r}+K{r}+L{r}+M{r}").font = BLACK
-    ws.cell(row=r, column=15, value=f"='Shipment Data'!L{sd}").font = GREEN
-    ws.cell(row=r, column=16, value=f"=O{r}-N{r}").font = BLACK
-    ws.cell(row=r, column=17, value=f'=IF(P{r}>1,"OVERCHARGED",IF(P{r}<-1,"UNDERBILLED","MATCH"))').font = BLACK
+    ws.cell(row=r, column=13, value=blank_if_empty(f'IF(D{r}="RTO",(J{r}+K{r})*INDEX(\'Rate Card\'!$H$4:$H$8,MATCH(B{r},\'Rate Card\'!$A$4:$A$8,0)),0)')).font = GREEN
+    ws.cell(row=r, column=14, value=blank_if_empty(f"J{r}+K{r}+L{r}+M{r}")).font = BLACK
+    ws.cell(row=r, column=15, value=blank_if_empty(f"'Shipment Data'!L{sd}")).font = GREEN
+    ws.cell(row=r, column=16, value=blank_if_empty(f"O{r}-N{r}")).font = BLACK
+    ws.cell(row=r, column=17, value=blank_if_empty(f'IF(P{r}>1,"OVERCHARGED",IF(P{r}<-1,"UNDERBILLED","MATCH"))')).font = BLACK
     for c in range(1, len(au_headers) + 1):
         ws.cell(row=r, column=c).border = BORDER
     for c in (10, 11, 12, 13, 14, 15, 16):
@@ -201,7 +209,7 @@ ws["B2"] = "Billing Audit Summary"
 ws["B2"].font = Font(name=FONT, bold=True, size=16, color="1F4E5F")
 
 labels = [
-    ("Total Shipments Audited", f"=COUNTA(Audit!A2:A{LAST_ROW})"),
+    ("Total Shipments Audited", f'=SUMPRODUCT(--(Audit!A2:A{LAST_ROW}<>""))'),
     ("Total Billed by Courier (Rs)", f"=SUM(Audit!O2:O{LAST_ROW})"),
     ("Total Expected Charge (Rs)", f"=SUM(Audit!N2:N{LAST_ROW})"),
     ("Net Variance (Rs)", f"=SUM(Audit!P2:P{LAST_ROW})"),

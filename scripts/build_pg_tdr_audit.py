@@ -123,11 +123,14 @@ for r, row in enumerate(sample_settlements, start=2):
         if c in (4, 5, 6, 7):
             cell.number_format = "\"Rs\" #,##0.00"
 
-ws["A16"] = "Replace these sample rows with your own settlement export. Keep the same column order."
-ws["A16"].font = Font(name=FONT, italic=True, size=9, color="666666")
+MAX_ROWS = 200  # Audit/Summary formulas are pre-built this far down so extra pasted rows aren't silently dropped
+NOTE_ROW = MAX_ROWS + 10  # kept well beyond MAX_ROWS so it never collides with the blank-row guard on column A
+
+ws[f"A{NOTE_ROW}"] = "Replace these sample rows with your own settlement export. Keep the same column order."
+ws[f"A{NOTE_ROW}"].font = Font(name=FONT, italic=True, size=9, color="666666")
 autosize(ws, [16, 12, 16, 20, 26, 20, 20])
 
-LAST_ROW = 1 + len(sample_settlements)
+LAST_ROW = 1 + MAX_ROWS
 
 # ---------- Audit ----------
 ws = wb.create_sheet("Audit")
@@ -141,21 +144,26 @@ for i, h in enumerate(au_headers, start=1):
 style_header(ws, 1, len(au_headers))
 ws.freeze_panes = "A2"
 
-for i in range(len(sample_settlements)):
+for i in range(MAX_ROWS):
     r = i + 2
     sd = i + 2
-    ws.cell(row=r, column=1, value=f"='Settlement Data'!A{sd}").font = GREEN
-    ws.cell(row=r, column=2, value=f"='Settlement Data'!C{sd}").font = GREEN
-    ws.cell(row=r, column=3, value=f"='Settlement Data'!D{sd}").font = GREEN
-    ws.cell(row=r, column=4, value=f"=INDEX('TDR Rate Card'!$B$4:$B$8,MATCH(B{r},'TDR Rate Card'!$A$4:$A$8,0))").font = GREEN
-    ws.cell(row=r, column=5, value=f"=C{r}*D{r}").font = BLACK
-    ws.cell(row=r, column=6, value=f"=E{r}*INDEX('TDR Rate Card'!$C$4:$C$8,MATCH(B{r},'TDR Rate Card'!$A$4:$A$8,0))").font = GREEN
-    ws.cell(row=r, column=7, value=f"=E{r}+F{r}").font = BLACK
-    ws.cell(row=r, column=8, value=f"='Settlement Data'!E{sd}").font = GREEN
-    ws.cell(row=r, column=9, value=f"='Settlement Data'!F{sd}").font = GREEN
-    ws.cell(row=r, column=10, value=f"=H{r}+I{r}").font = BLACK
-    ws.cell(row=r, column=11, value=f"=J{r}-G{r}").font = BLACK
-    ws.cell(row=r, column=12, value=f'=IF(K{r}>0.5,"OVERCHARGED",IF(K{r}<-0.5,"UNDERBILLED","MATCH"))').font = BLACK
+    guard = f"'Settlement Data'!A{sd}=\"\""
+
+    def blank_if_empty(inner):
+        return f'=IF({guard},"",{inner})'
+
+    ws.cell(row=r, column=1, value=blank_if_empty(f"'Settlement Data'!A{sd}")).font = GREEN
+    ws.cell(row=r, column=2, value=blank_if_empty(f"'Settlement Data'!C{sd}")).font = GREEN
+    ws.cell(row=r, column=3, value=blank_if_empty(f"'Settlement Data'!D{sd}")).font = GREEN
+    ws.cell(row=r, column=4, value=blank_if_empty(f"INDEX('TDR Rate Card'!$B$4:$B$8,MATCH(B{r},'TDR Rate Card'!$A$4:$A$8,0))")).font = GREEN
+    ws.cell(row=r, column=5, value=blank_if_empty(f"C{r}*D{r}")).font = BLACK
+    ws.cell(row=r, column=6, value=blank_if_empty(f"E{r}*INDEX('TDR Rate Card'!$C$4:$C$8,MATCH(B{r},'TDR Rate Card'!$A$4:$A$8,0))")).font = GREEN
+    ws.cell(row=r, column=7, value=blank_if_empty(f"E{r}+F{r}")).font = BLACK
+    ws.cell(row=r, column=8, value=blank_if_empty(f"'Settlement Data'!E{sd}")).font = GREEN
+    ws.cell(row=r, column=9, value=blank_if_empty(f"'Settlement Data'!F{sd}")).font = GREEN
+    ws.cell(row=r, column=10, value=blank_if_empty(f"H{r}+I{r}")).font = BLACK
+    ws.cell(row=r, column=11, value=blank_if_empty(f"J{r}-G{r}")).font = BLACK
+    ws.cell(row=r, column=12, value=blank_if_empty(f'IF(K{r}>0.5,"OVERCHARGED",IF(K{r}<-0.5,"UNDERBILLED","MATCH"))')).font = BLACK
     for c in range(1, len(au_headers) + 1):
         ws.cell(row=r, column=c).border = BORDER
     ws.cell(row=r, column=4).number_format = "0.00%"
@@ -180,7 +188,7 @@ ws["B2"] = "Settlement Audit Summary"
 ws["B2"].font = Font(name=FONT, bold=True, size=16, color="1F4E5F")
 
 labels = [
-    ("Total Transactions Audited", f"=COUNTA(Audit!A2:A{LAST_ROW})"),
+    ("Total Transactions Audited", f'=SUMPRODUCT(--(Audit!A2:A{LAST_ROW}<>""))'),
     ("Total Transaction Value (Rs)", f"=SUM(Audit!C2:C{LAST_ROW})"),
     ("Total Actual Deduction (Rs)", f"=SUM(Audit!J2:J{LAST_ROW})"),
     ("Total Expected Deduction (Rs)", f"=SUM(Audit!G2:G{LAST_ROW})"),

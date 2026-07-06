@@ -108,6 +108,10 @@ Replace the sample rate card (5 generic zones: Local, Regional, Metro-to-Metro, 
 with your own courier's actual contracted rates. Zone names and structure are illustrative - adjust to match
 however your courier defines zones.
 
+The Audit and Summary Dashboard formulas are pre-built for up to 200 shipments - paste in fewer or more rows
+and the totals adjust automatically, no formulas to touch. If you have more than 200 shipments, select the
+last row of the Audit tab and drag-fill it down as far as you need.
+
 ### Use cases
 
 - **Monthly invoice reconciliation** - check every courier bill before you pay it, not after.
@@ -203,6 +207,10 @@ data. Here's what happens end to end, using transaction **TXN90001** as the exam
 
 Replace the sample TDR rate card (UPI, Debit Card, Credit Card, Netbanking, Wallet) with your own gateway's
 actual contracted rates - these vary a lot by provider and by your negotiated merchant agreement.
+
+The Audit and Summary Dashboard formulas are pre-built for up to 200 transactions - paste in fewer or more
+rows and the totals adjust automatically, no formulas to touch. If you have more than 200 transactions,
+select the last row of the Audit tab and drag-fill it down as far as you need.
 
 ### Use cases
 
@@ -301,6 +309,10 @@ as the example:
 
 Replace the 5 sample box sizes (XS to XL) and their costs with your actual packaging options, and swap in
 your real product catalog on the Product Data tab.
+
+The Fit Checker and Summary formulas are pre-built for up to 200 products - paste in fewer or more rows and
+the totals adjust automatically, no formulas to touch. If you have more than 200 products, select the last
+row of the Fit Checker tab and drag-fill it down as far as you need.
 
 ### Use cases
 

@@ -81,6 +81,10 @@ data. Here's what happens end to end, using transaction **TXN90001** as the exam
 Replace the sample TDR rate card (UPI, Debit Card, Credit Card, Netbanking, Wallet) with your own gateway's
 actual contracted rates - these vary a lot by provider and by your negotiated merchant agreement.
 
+The Audit and Summary Dashboard formulas are pre-built for up to 200 transactions - paste in fewer or more
+rows and the totals adjust automatically, no formulas to touch. If you have more than 200 transactions,
+select the last row of the Audit tab and drag-fill it down as far as you need.
+
 ## Use cases
 
 - **Monthly settlement reconciliation** - catch gateway overcharges before small per-transaction deductions

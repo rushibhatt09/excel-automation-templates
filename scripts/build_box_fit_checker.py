@@ -128,11 +128,14 @@ for r, row in enumerate(products, start=2):
         if c in (3, 4, 5, 6):
             cell.number_format = "0.00"
 
-ws["A14"] = "Replace with your own product list. Enter Length = longest side, Width = middle side, Height = shortest side."
-ws["A14"].font = Font(name=FONT, italic=True, size=9, color="666666")
+MAX_ROWS = 200  # Fit Checker/Summary formulas are pre-built this far down so extra pasted rows aren't silently dropped
+NOTE_ROW = MAX_ROWS + 10  # kept well beyond MAX_ROWS so it never collides with the blank-row guard on column A
+
+ws[f"A{NOTE_ROW}"] = "Replace with your own product list. Enter Length = longest side, Width = middle side, Height = shortest side."
+ws[f"A{NOTE_ROW}"].font = Font(name=FONT, italic=True, size=9, color="666666")
 autosize(ws, [14, 26, 14, 12, 14, 12])
 
-LAST_ROW = 1 + len(products)
+LAST_ROW = 1 + MAX_ROWS
 
 # ---------- Fit Checker ----------
 ws = wb.create_sheet("Fit Checker")
@@ -147,42 +150,47 @@ ws.freeze_panes = "A2"
 
 box_rows_ref = [4, 5, 6, 7, 8]  # rows in Box Library for BX1..BX5
 
-for i in range(len(products)):
+for i in range(MAX_ROWS):
     r = i + 2
     pd = i + 2
-    ws.cell(row=r, column=1, value=f"='Product Data'!A{pd}").font = GREEN
-    ws.cell(row=r, column=2, value=f"='Product Data'!B{pd}").font = GREEN
-    ws.cell(row=r, column=3, value=f"='Product Data'!C{pd}").font = GREEN
-    ws.cell(row=r, column=4, value=f"='Product Data'!D{pd}").font = GREEN
-    ws.cell(row=r, column=5, value=f"='Product Data'!E{pd}").font = GREEN
-    ws.cell(row=r, column=6, value=f"='Product Data'!F{pd}").font = GREEN
-    ws.cell(row=r, column=7, value=f"=C{r}*D{r}*E{r}").font = BLACK
+    guard = f"'Product Data'!A{pd}=\"\""
+
+    def blank_if_empty(inner):
+        return f'=IF({guard},"",{inner})'
+
+    ws.cell(row=r, column=1, value=blank_if_empty(f"'Product Data'!A{pd}")).font = GREEN
+    ws.cell(row=r, column=2, value=blank_if_empty(f"'Product Data'!B{pd}")).font = GREEN
+    ws.cell(row=r, column=3, value=blank_if_empty(f"'Product Data'!C{pd}")).font = GREEN
+    ws.cell(row=r, column=4, value=blank_if_empty(f"'Product Data'!D{pd}")).font = GREEN
+    ws.cell(row=r, column=5, value=blank_if_empty(f"'Product Data'!E{pd}")).font = GREEN
+    ws.cell(row=r, column=6, value=blank_if_empty(f"'Product Data'!F{pd}")).font = GREEN
+    ws.cell(row=r, column=7, value=blank_if_empty(f"C{r}*D{r}*E{r}")).font = BLACK
 
     fit_cols = [8, 9, 10, 11, 12]
     for fc, brow in zip(fit_cols, box_rows_ref):
-        formula = (f"=AND($C{r}<='Box Library'!$C${brow},$D{r}<='Box Library'!$D${brow},"
-                   f"$E{r}<='Box Library'!$E${brow},$F{r}<='Box Library'!$F${brow})")
-        ws.cell(row=r, column=fc, value=formula).font = GREEN
+        inner = (f"AND($C{r}<='Box Library'!$C${brow},$D{r}<='Box Library'!$D${brow},"
+                 f"$E{r}<='Box Library'!$E${brow},$F{r}<='Box Library'!$F${brow})")
+        ws.cell(row=r, column=fc, value=blank_if_empty(inner)).font = GREEN
 
     H, I, J, K, L = [f"{get_column_letter(c)}{r}" for c in fit_cols]
-    rec_box = (f"=IF({H},'Box Library'!$A${box_rows_ref[0]},IF({I},'Box Library'!$A${box_rows_ref[1]},"
+    rec_box = (f"IF({H},'Box Library'!$A${box_rows_ref[0]},IF({I},'Box Library'!$A${box_rows_ref[1]},"
                f"IF({J},'Box Library'!$A${box_rows_ref[2]},IF({K},'Box Library'!$A${box_rows_ref[3]},"
                f"IF({L},'Box Library'!$A${box_rows_ref[4]},\"NO BOX FITS\")))))")
-    ws.cell(row=r, column=13, value=rec_box).font = GREEN
+    ws.cell(row=r, column=13, value=blank_if_empty(rec_box)).font = GREEN
 
-    rec_cost = (f"=IF({H},'Box Library'!$G${box_rows_ref[0]},IF({I},'Box Library'!$G${box_rows_ref[1]},"
+    rec_cost = (f"IF({H},'Box Library'!$G${box_rows_ref[0]},IF({I},'Box Library'!$G${box_rows_ref[1]},"
                 f"IF({J},'Box Library'!$G${box_rows_ref[2]},IF({K},'Box Library'!$G${box_rows_ref[3]},"
                 f"IF({L},'Box Library'!$G${box_rows_ref[4]},0)))))")
-    ws.cell(row=r, column=14, value=rec_cost).font = GREEN
+    ws.cell(row=r, column=14, value=blank_if_empty(rec_cost)).font = GREEN
 
     rec_vol = (f"IF({H},'Box Library'!$H${box_rows_ref[0]},IF({I},'Box Library'!$H${box_rows_ref[1]},"
                f"IF({J},'Box Library'!$H${box_rows_ref[2]},IF({K},'Box Library'!$H${box_rows_ref[3]},"
                f"'Box Library'!$H${box_rows_ref[4]}))))")
-    util = f'=IF(M{r}="NO BOX FITS",0,G{r}/({rec_vol}))'
-    ws.cell(row=r, column=15, value=util).font = BLACK
+    util = f'IF(M{r}="NO BOX FITS",0,G{r}/({rec_vol}))'
+    ws.cell(row=r, column=15, value=blank_if_empty(util)).font = BLACK
 
-    status = f'=IF(M{r}="NO BOX FITS","REVIEW - NO STANDARD BOX FITS","OK")'
-    ws.cell(row=r, column=16, value=status).font = BLACK
+    status = f'IF(M{r}="NO BOX FITS","REVIEW - NO STANDARD BOX FITS","OK")'
+    ws.cell(row=r, column=16, value=blank_if_empty(status)).font = BLACK
 
     for c in range(1, len(fc_headers) + 1):
         ws.cell(row=r, column=c).border = BORDER
@@ -208,7 +216,7 @@ ws["B2"] = "Box-Fit Summary"
 ws["B2"].font = Font(name=FONT, bold=True, size=16, color="1F4E5F")
 
 labels = [
-    ("Total Products Checked", f"=COUNTA('Fit Checker'!A2:A{LAST_ROW})"),
+    ("Total Products Checked", f"=SUMPRODUCT(--('Fit Checker'!A2:A{LAST_ROW}<>\"\"))"),
     ("Products with No Fitting Box", f'=COUNTIF(\'Fit Checker\'!P2:P{LAST_ROW},"REVIEW - NO STANDARD BOX FITS")'),
     ("Total Recommended Packaging Cost (Rs)", f"=SUM('Fit Checker'!N2:N{LAST_ROW})"),
     ("Average Space Utilization (%)", f"=AVERAGEIF('Fit Checker'!P2:P{LAST_ROW},\"OK\",'Fit Checker'!O2:O{LAST_ROW})"),
