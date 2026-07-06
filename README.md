@@ -15,6 +15,7 @@ attention.
 - [2. Payment Gateway TDR Audit](#2-payment-gateway-tdr-audit)
 - [3. Volumetric Weight & Box-Fit Checker](#3-volumetric-weight--box-fit-checker)
 - [How to use any template](#how-to-use-any-template)
+- [Google Sheets compatibility](#google-sheets-compatibility)
 - [Why these exist](#why-these-exist)
 - [License](#license)
 
@@ -321,6 +322,18 @@ your real product catalog on the Product Data tab.
 3. Every workbook has a **Read Me** tab first - follow its steps.
 4. Replace the sample data (blue text, yellow-shaded cells) with your own numbers.
 5. The audit/summary tabs recalculate automatically - no formulas to write yourself.
+
+## Google Sheets compatibility
+
+These templates were built and verified in Microsoft Excel, but every formula uses only standard functions
+that behave identically in Google Sheets - `IF`, `AND`, `INDEX`, `MATCH`, `MAX`, `ROUND`, `CEILING`, `SUM`,
+`SUMIF`, `SUMIFS`, `COUNTA`, `COUNTIF`, `AVERAGEIF` - and none of the array-entry formulas (like
+`MATCH(TRUE, range)`) that sometimes behave differently between the two. Cross-sheet references
+(`'Sheet Name'!A1`) and the conditional-formatting rules also use syntax Google Sheets recognizes on import.
+
+To use a template in Google Sheets: File > Import > Upload the `.xlsx`, choose "Insert new sheet(s)" or
+"Replace spreadsheet." Everything - formulas, conditional formatting colors, frozen header rows - should
+carry over as-is. If you spot any formula that doesn't translate cleanly, please open an issue.
 
 ## Why these exist
 
